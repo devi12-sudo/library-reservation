@@ -29,18 +29,20 @@ environment {
             }
         }
 
-        stage('Docker Push') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASSWORD'
-                )]) {
-                    bat 'echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USER% --password-stdin'
-                    bat 'docker push devi45/library-reservation:latest'
-                }
-            }
+        
+stage('Docker Push') {
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'dockerhub-pat-new',
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASSWORD'
+        )]) {
+            bat 'powershell -NoProfile -NonInteractive -Command "$env:DOCKER_PASSWORD | docker login --username $env:DOCKER_USER --password-stdin"'
+            bat 'docker push devi45/library-reservation:latest'
         }
+    }
+}
+
 
         stage('Kubernetes Deploy') {
             steps {
