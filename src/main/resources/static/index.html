@@ -1,0 +1,257 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Reservation System</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f4f8;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #243b64;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px #ccc;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 11px;
+            margin: 8px 0;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #243b64;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background: #365b94;
+        }
+
+        .cancel {
+            background: #c0392b;
+            width: auto;
+            padding: 8px 15px;
+        }
+
+        .section {
+            margin-top: 25px;
+        }
+
+        .item {
+            background: #eef2f8;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 5px;
+        }
+
+        #message {
+            font-weight: bold;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Online Library Seat and Study Room Reservation</h1>
+
+    <div class="section">
+        <h2>Available Resources</h2>
+        <div id="resources">Loading resources...</div>
+    </div>
+
+    <div class="section">
+        <h2>Book a Seat or Study Room</h2>
+
+        <form id="bookingForm">
+
+            <label>Student Name</label>
+            <input type="text" id="userName" required>
+
+            <label>Select Seat or Room</label>
+            <select id="resourceId" required>
+                <option value="">Select Resource</option>
+            </select>
+
+            <label>Reservation Date</label>
+            <input type="date" id="date" required>
+
+            <label>Start Time</label>
+            <input type="time" id="start" required>
+
+            <label>End Time</label>
+            <input type="time" id="end" required>
+
+            <button type="submit">Book Now</button>
+
+        </form>
+
+        <p id="message"></p>
+    </div>
+
+    <div class="section">
+        <h2>All Reservations</h2>
+        <div id="reservations">Loading reservations...</div>
+    </div>
+
+</div>
+
+<script>
+
+    const API = "/api";
+
+    // Load available resources
+    async function loadResources() {
+
+        const response = await fetch(API + "/resources");
+        const resources = await response.json();
+
+        const resourceList = document.getElementById("resources");
+        const resourceSelect = document.getElementById("resourceId");
+
+        resourceList.innerHTML = "";
+        resourceSelect.innerHTML =
+            '<option value="">Select Resource</option>';
+
+        resources.forEach(resource => {
+
+            resourceList.innerHTML += `
+                <div class="item">
+                    ${resource.name} - ${resource.type}
+                    (Capacity: ${resource.capacity})
+                </div>
+            `;
+
+            resourceSelect.innerHTML += `
+                <option value="${resource.id}">
+                    ${resource.name}
+                </option>
+            `;
+        });
+    }
+
+    // Load all reservations
+    async function loadReservations() {
+
+        const response = await fetch(API + "/reservations");
+        const reservations = await response.json();
+
+        const list = document.getElementById("reservations");
+        list.innerHTML = "";
+
+        if (reservations.length === 0) {
+            list.innerHTML = "No reservations available.";
+            return;
+        }
+
+        reservations.forEach(r => {
+
+            list.innerHTML += `
+                <div class="item">
+                    <b>Student:</b> ${r.userName}<br>
+                    <b>Resource:</b> ${r.resourceId}<br>
+                    <b>Date:</b> ${r.date}<br>
+                    <b>Time:</b> ${r.start} - ${r.end}<br>
+
+                    <button class="cancel"
+                        onclick="cancelReservation(${r.id})">
+                        Cancel
+                    </button>
+                </div>
+            `;
+        });
+    }
+
+    // Create a reservation
+    document.getElementById("bookingForm")
+        .addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const reservation = {
+            userName: document.getElementById("userName").value,
+            resourceId: document.getElementById("resourceId").value,
+            date: document.getElementById("date").value,
+            start: document.getElementById("start").value,
+            end: document.getElementById("end").value
+        };
+
+        const message = document.getElementById("message");
+
+        try {
+            const response = await fetch(API + "/reservations", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(reservation)
+            });
+
+            if (response.status === 201) {
+                message.textContent = "Reservation successful!";
+                message.style.color = "green";
+
+                document.getElementById("bookingForm").reset();
+                loadReservations();
+
+            } else if (response.status === 409) {
+                message.textContent = "This time slot is already booked!";
+                message.style.color = "red";
+
+            } else {
+                message.textContent = "Invalid reservation details!";
+                message.style.color = "red";
+            }
+
+        } catch (error) {
+            message.textContent = "Unable to connect to the server.";
+            message.style.color = "red";
+        }
+    });
+
+    // Cancel a reservation
+    async function cancelReservation(id) {
+
+        const response = await fetch(
+            API + "/reservations/" + id,
+            { method: "DELETE" }
+        );
+
+        if (response.status === 204) {
+            alert("Reservation cancelled successfully!");
+            loadReservations();
+        } else {
+            alert("Reservation not found!");
+        }
+    }
+
+    // Load data when page opens
+    loadResources();
+    loadReservations();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: library-reservation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: library-reservation
+  template:
+    metadata:
+      labels:
+        app: library-reservation
+    spec:
+      containers:
+        - name: library-reservation
+          image: devi45/library-reservation:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
