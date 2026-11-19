@@ -3,6 +3,7 @@ pipeline {
     agent any
 environment {
     PATH = "C:\\Users\\velug\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin;${env.PATH}"
+    KUBECONFIG = "C:\\Users\\velug\\.kube\\config"
 }
     stages {
         stage('Checkout') {
