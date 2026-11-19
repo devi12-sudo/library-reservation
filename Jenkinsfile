@@ -1,7 +1,9 @@
 
 pipeline {
     agent any
-
+environment {
+    PATH = "C:\\Users\\velug\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin;${env.PATH}"
+}
     stages {
         stage('Checkout') {
             steps {
